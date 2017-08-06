@@ -16,11 +16,8 @@ for (var name in Game.creeps){
         upgrader_count++;
     }
 }
-console.log("H =   " + harvester_count);
-console.log("U =   " + upgrader_count);
 
-
-if (upgrader_count < 5){
+if (upgrader_count < 7){
         RoleSpawn.run("U");
     }
 if (harvester_count < 2){
