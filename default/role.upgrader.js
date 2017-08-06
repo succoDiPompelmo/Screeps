@@ -9,22 +9,24 @@
  
  var roleUpgrader = {
      run: function(creep) {
-         if (creep.room.controller.level < 5){
-            if(creep.carry.energy < creep.carryCapacity){
-                var sources = creep.room.find(FIND_SOURCES);
-                if (creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(sources[0]);
-                }
-                
-            }
-            else {
-                if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE){
-                    creep.moveTo(creep.room.controller);
-                }
-            }
+         if (creep.carry.energy == creep.carryCapacity && creep.memory.isFull == false){
+             creep.memory.isFull = true;
+             creep.say("Vado a uppare");
+         }
+         if (creep.carry.energy == 0 && creep.memory.isFull == true){
+             creep.memory.isFull = false;
+             creep.say("Vado a zappare");
+         }
+         if(!creep.memory.isFull){
+             var sources = creep.room.find(FIND_SOURCES);
+             if (creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
+                 creep.moveTo(sources[0]);
+             }
          }
          else {
-             creep.memory.role = "harvester";
+             if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE){
+                 creep.moveTo(creep.room.controller);
+             }
          }
      }
  }
