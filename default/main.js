@@ -7,6 +7,8 @@ var upgrader_count = 0;
 var harvester_count = 0;
 var builder_count = 0;
 
+Game.spawns["Spawn1"].memory.creation_queue = 1;
+
 for (var name in Game.creeps){
     var creep = Game.creeps[name];
     if (creep.memory.role == "harvester"){
@@ -25,10 +27,10 @@ for (var name in Game.creeps){
 
 if (upgrader_count < 2){
         RoleSpawn.run("U");
-    }
+}
 if (harvester_count < 1){
         RoleSpawn.run("H");
-    }
-if (builder_count < 2){
+}
+if (builder_count < 3){
         RoleSpawn.run("B");
 }
