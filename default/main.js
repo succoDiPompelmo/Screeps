@@ -1,13 +1,10 @@
 var RoleHarvester = require('role.harvester');
 var RoleUpgrader = require('role.upgrader');
+var RoleBuilder = require('role.builder')
 var RoleSpawn = require('role.spawn');
-var RoleBuilder = require('role.builder');
 
 var upgrader_count = 0;
 var harvester_count = 0;
-var builder_count = 0;
-
-Game.spawns["Spawn1"].memory.creation_queue = 1;
 
 for (var name in Game.creeps){
     var creep = Game.creeps[name];
@@ -25,12 +22,12 @@ for (var name in Game.creeps){
     }
 }
 
-if (upgrader_count < 2){
+if (upgrader_count < 7){
         RoleSpawn.run("U");
-}
-if (harvester_count < 1){
+    }
+if (harvester_count < 2){
         RoleSpawn.run("H");
-}
-if (builder_count < 3){
-        RoleSpawn.run("B");
+    }
+if (builder_count < 5){
+        RoleBuilder.run("B")
 }
