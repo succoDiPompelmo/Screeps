@@ -6,6 +6,7 @@ const RoleSpawn = require('role.spawn');
 let upgraderCount = 0;
 let harvesterCount = 0;
 
+
 for (const name in Game.creeps) {
   if (Object.prototype.hasOwnProperty.call(Game.creeps, name)) {
     const creep = Game.creeps[name];
