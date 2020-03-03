@@ -17,8 +17,7 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+        
     - run: npm install
-    - name: ESLint checks
-      uses: gimenete/eslint-action@1.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - run: npm run format-fix
+    - run: npm run format-check
