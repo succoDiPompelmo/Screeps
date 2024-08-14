@@ -5,7 +5,6 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "20.12.7",
     "@types/screeps": "^3.3.8",
-    "gts": "^5.3.1",
     "rollup": "^4.20.0",
     "rollup-plugin-screeps": "^1.0.1",
     "typescript": "^5.5.4"
