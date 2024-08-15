@@ -14,7 +14,6 @@ declare global {
   }
 
   interface CreepMemory {
-    role: string;
     room: string;
     working: boolean;
   }
@@ -32,8 +31,10 @@ const SPAWN = 'Spawn';
 export const loop = () => {
   let total_creeps = Object.keys(Game.creeps).length;
 
-  if (total_creeps < 1) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Harvester', { memory: { role: 'harvester', room: 'W1N1', working: false } });
+  if (total_creeps == 0) {
+    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Pino', { memory: { room: 'W1N1', working: false } });
+  } else if (total_creeps == 1) {
+    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Luigi', { memory: { room: 'W1N1', working: false } });
   }
 
   for (const creep_name in Game.creeps) {
@@ -51,13 +52,21 @@ export const loop = () => {
 };
 
 function harvest(creep: Creep) {
-  if (creep.store.energy < creep.store.getCapacity()) {
+  if (creep.store.energy > 0) {
+    const target = select_deposit_target(creep);
+
+    if (!target) {
+      console.log('No target found to deposit energy');
+      return;
+    }
+
+    deposit(creep, target);
+
+  } else {
     const sources = creep.room.find(FIND_SOURCES);
     const closest_source = creep.pos.findClosestByPath(sources);
 
     gather(creep, closest_source);
-  } else {
-    deposit(creep, Game.spawns[SPAWN]);
   }
 }
 
@@ -68,7 +77,26 @@ function gather(creep: Creep, source: Source | null) {
 }
 
 function deposit(creep: Creep, structure: Structure) {
+
+  creep.transfer(structure, RESOURCE_ENERGY);
+
   if (creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
     creep.moveTo(structure, { visualizePathStyle: { stroke: '#ffffff' } });
+  }
+}
+
+function select_deposit_target(creep: Creep): Structure | undefined {
+  const spawns = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) => {
+      return (structure.structureType == STRUCTURE_SPAWN) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+    },
+  });
+
+  const controller = creep.room.controller;
+
+  if (spawns.length > 0) {
+    return spawns[0];
+  } else if (controller && controller.my) {
+    return controller;
   }
 }
