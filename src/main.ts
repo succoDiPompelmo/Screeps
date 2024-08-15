@@ -1,6 +1,12 @@
 enum Role {
   Harvester = 1,
-  Carrier,
+  Builder,
+}
+
+enum Task {
+  Harvest = 1,
+  Deposit,
+  Build,
 }
 
 declare global {
@@ -19,8 +25,8 @@ declare global {
   }
 
   interface CreepMemory {
-    room: string;
     role: Role;
+    task: Task;
   }
 
   // Syntax for adding proprties to `global` (ex "global.log")
@@ -37,15 +43,25 @@ export const loop = () => {
   let total_creeps = Object.keys(Game.creeps).length;
 
   if (total_creeps == 0) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Pino', { memory: { room: 'W1N1', role: Role.Harvester } });
+    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Pino', { memory: { role: Role.Harvester, task: Task.Harvest } });
   } else if (total_creeps == 1) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Luigi', { memory: { room: 'W1N1', role: Role.Harvester } });
+    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Luigi', { memory: { role: Role.Harvester, task: Task.Harvest } });
+  } else if (total_creeps == 2) {
+    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Mario', { memory: { role: Role.Builder, task: Task.Harvest } });
   }
+
+  
 
   for (const creep_name in Game.creeps) {
     const creep = Game.creeps[creep_name];
 
-    harvest(creep);
+    if (creep.memory.role == Role.Harvester) {
+      harvest(creep);
+    } else if (creep.memory.role == Role.Builder) {
+      // We should only setup construction sites once
+      setup_construction_sites(creep.room);
+      build(creep);
+    }
   }
 
   // Automatically delete memory of missing creeps
@@ -56,14 +72,32 @@ export const loop = () => {
   }
 };
 
+function setup_construction_sites(room: Room) {
+  let controller = room.controller;
+
+  if (controller === undefined) {
+    return;
+  }
+
+  let controller_level = controller.level;
+  let spawn_position = room.find(FIND_MY_SPAWNS)[0].pos;
+
+  if (controller_level > 1) {
+    room.createConstructionSite(spawn_position.x + 2, spawn_position.y, STRUCTURE_EXTENSION);
+    room.createConstructionSite(spawn_position.x, spawn_position.y + 2, STRUCTURE_EXTENSION);
+    room.createConstructionSite(spawn_position.x - 2, spawn_position.y, STRUCTURE_EXTENSION);
+    room.createConstructionSite(spawn_position.x, spawn_position.y - 2, STRUCTURE_EXTENSION);
+  }
+}
+
 function harvest(creep: Creep) {
   // Very bad code, states are not well defined and should be refactored to a state machine
-  if (creep.store.energy < creep.store.getCapacity() && creep.memory.role == Role.Harvester) {
+  if (creep.store.energy < creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
     const sources = creep.room.find(FIND_SOURCES);
     const closest_source = creep.pos.findClosestByPath(sources);
 
     gather(creep, closest_source);
-  } else if (creep.store.energy > 0 && creep.memory.role == Role.Carrier) {
+  } else if (creep.store.energy > 0 && creep.memory.task == Task.Deposit) {
     const target = select_deposit_target(creep);
 
     if (!target) {
@@ -72,10 +106,39 @@ function harvest(creep: Creep) {
     }
 
     deposit(creep, target);
-  } else if (creep.store.energy == 0 && creep.memory.role == Role.Carrier) {
-    creep.memory.role = Role.Harvester;
-  } else if (creep.store.energy == creep.store.getCapacity() && creep.memory.role == Role.Harvester) {
-    creep.memory.role = Role.Carrier;
+  } else if (creep.store.energy == 0 && creep.memory.task == Task.Deposit) {
+    creep.memory.task = Task.Harvest;
+  } else if (creep.store.energy == creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
+    creep.memory.task = Task.Deposit;
+  }
+  else {
+    console.log('Creep is in an unknown state and will not do anything');
+  }
+}
+
+function build(creep: Creep) {
+  // Very bad code, states are not well defined and should be refactored to a state machine
+  if (creep.store.energy < creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
+    const sources = creep.room.find(FIND_SOURCES);
+    const closest_source = creep.pos.findClosestByPath(sources);
+
+    gather(creep, closest_source);
+  } else if (creep.store.energy > 0 && creep.memory.task == Task.Build) {
+    const construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES);
+
+  if (construction_sites.length > 0) {
+    const closest_site = creep.pos.findClosestByPath(construction_sites);
+
+    if (closest_site) {
+      if (creep.build(closest_site) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(closest_site, { visualizePathStyle: { stroke: '#ffffff' } });
+      }
+    }
+  }
+  } else if (creep.store.energy == 0 && creep.memory.task == Task.Build) {
+    creep.memory.task = Task.Harvest;
+  } else if (creep.store.energy == creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
+    creep.memory.task = Task.Build;
   }
   else {
     console.log('Creep is in an unknown state and will not do anything');
