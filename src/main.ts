@@ -33,7 +33,7 @@ export const loop = () => {
   let total_creeps = Object.keys(Game.creeps).length;
 
   if (total_creeps < 1) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Harvester', { memory: { role: 'harvester', room: 'W1N1', working: false, works_at: null } });
+    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Harvester', { memory: { role: 'harvester', room: 'W1N1', working: false } });
   }
 
   for (const creep_name in Game.creeps) {
@@ -55,12 +55,20 @@ function harvest(creep: Creep) {
     const sources = creep.room.find(FIND_SOURCES);
     const closest_source = creep.pos.findClosestByPath(sources);
 
-    if (closest_source && creep.harvest(closest_source) == ERR_NOT_IN_RANGE) {
-      creep.moveTo(closest_source, { visualizePathStyle: { stroke: '#ffaa00' } });
+    gather(creep, closest_source);
   } else {
-    if (creep.transfer(Game.spawns[SPAWN], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-      creep.moveTo(Game.spawns[SPAWN], { visualizePathStyle: { stroke: '#ffffff' } });
-    }
+    deposit(creep, Game.spawns[SPAWN]);
   }
 }
+
+function gather(creep: Creep, source: Source | null) {
+  if (source && creep.harvest(source) == ERR_NOT_IN_RANGE) {
+    creep.moveTo(source, { visualizePathStyle: { stroke: '#ffaa00' } });
+  }
+}
+
+function deposit(creep: Creep, structure: Structure) {
+  if (creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+    creep.moveTo(structure, { visualizePathStyle: { stroke: '#ffffff' } });
+  }
 }
