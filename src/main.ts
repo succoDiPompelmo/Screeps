@@ -40,16 +40,8 @@ declare global {
 const SPAWN = 'Spawn';
 
 export const loop = () => {
-  let total_creeps = Object.keys(Game.creeps).length;
-
-  if (total_creeps == 0) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Pino', { memory: { role: Role.Harvester, task: Task.Harvest } });
-  } else if (total_creeps == 1) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Luigi', { memory: { role: Role.Harvester, task: Task.Harvest } });
-  } else if (total_creeps == 2) {
-    Game.spawns[SPAWN].spawnCreep([WORK, CARRY, MOVE], 'Mario', { memory: { role: Role.Builder, task: Task.Harvest } });
-  }
-
+  spawn_harvester(Game.spawns[SPAWN]);
+  spawn_builder(Game.spawns[SPAWN]);
   
 
   for (const creep_name in Game.creeps) {
@@ -71,6 +63,36 @@ export const loop = () => {
     }
   }
 };
+
+function spawn_harvester(spawn: StructureSpawn) {
+  let creeps = Game.creeps;
+  let harvesters = Object.keys(creeps).filter((creep_name) => creeps[creep_name].memory.role == Role.Harvester && creeps[creep_name]);
+  let harvesters_count = harvesters.length;
+
+  let ran = Math.floor(Math.random() * 100000);
+
+  if (harvesters_count < 3 && !spawn.spawning) {
+    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Pino_' + ran, { memory: { role: Role.Harvester, task: Task.Harvest } });
+
+    if (output != OK) {
+      console.log(`Error spawning harvester creep: ${output}`);
+    }
+  }
+}
+
+function spawn_builder(spawn: StructureSpawn) {
+  let creeps = Game.creeps;
+  let builders = Object.keys(creeps).filter((creep_name) => creeps[creep_name].memory.role == Role.Builder);
+  let builders_count = builders.length;
+
+  if (builders_count < 3 && !spawn.spawning) {
+    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Mario_' + builders_count, { memory: { role: Role.Builder, task: Task.Harvest } });
+
+    if (output != OK) {
+      console.log(`Error spawning builder creep: ${output}`);
+    }
+  }
+}
 
 function setup_construction_sites(room: Room) {
   let controller = room.controller;
@@ -112,7 +134,7 @@ function harvest(creep: Creep) {
     creep.memory.task = Task.Deposit;
   }
   else {
-    console.log('Creep is in an unknown state and will not do anything');
+    console.log(`Creep ${creep.name} is in an unknown state and will not do anything`);
   }
 }
 
@@ -141,7 +163,7 @@ function build(creep: Creep) {
     creep.memory.task = Task.Build;
   }
   else {
-    console.log('Creep is in an unknown state and will not do anything');
+    console.log(`Creep ${creep.name} is in an unknown state and will not do anything`);
   }
 }
 
