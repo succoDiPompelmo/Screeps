@@ -85,8 +85,10 @@ function spawn_builder(spawn: StructureSpawn) {
   let builders = Object.keys(creeps).filter((creep_name) => creeps[creep_name].memory.role == Role.Builder);
   let builders_count = builders.length;
 
+  let ran = Math.floor(Math.random() * 100000);
+
   if (builders_count < 3 && !spawn.spawning) {
-    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Mario_' + builders_count, { memory: { role: Role.Builder, task: Task.Harvest } });
+    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Mario_' + ran, { memory: { role: Role.Builder, task: Task.Harvest } });
 
     if (output != OK) {
       console.log(`Error spawning builder creep: ${output}`);
