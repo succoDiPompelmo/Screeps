@@ -85,9 +85,11 @@ function spawn_builder(spawn: StructureSpawn) {
   let builders = Object.keys(creeps).filter((creep_name) => creeps[creep_name].memory.role == Role.Builder);
   let builders_count = builders.length;
 
+  const construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+
   let ran = Math.floor(Math.random() * 100000);
 
-  if (builders_count < 3 && !spawn.spawning) {
+  if (builders_count < 3 && !spawn.spawning && construction_sites.length > 0) {
     let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Mario_' + ran, { memory: { role: Role.Builder, task: Task.Harvest } });
 
     if (output != OK) {
@@ -158,6 +160,10 @@ function build(creep: Creep) {
         creep.moveTo(closest_site, { visualizePathStyle: { stroke: '#ffffff' } });
       }
     }
+  } else {
+    // We have no construction sites, so we should deposit the energy instead
+    creep.memory.task = Task.Deposit;
+    creep.memory.role = Role.Harvester;
   }
   } else if (creep.store.energy == 0 && creep.memory.task == Task.Build) {
     creep.memory.task = Task.Harvest;
