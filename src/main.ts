@@ -120,6 +120,13 @@ function setup_construction_sites(room: Room) {
 
 function harvest(creep: Creep) {
   // Very bad code, states are not well defined and should be refactored to a state machine
+
+  // If the creep has no capacity, we should not do anything
+  // This happens when the creep spawns even though has CARRY body parts
+  if (!creep.store.getCapacity()) {
+    return;
+  }
+
   if (creep.store.energy < creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
     const sources = creep.room.find(FIND_SOURCES);
     const closest_source = creep.pos.findClosestByPath(sources);
@@ -140,12 +147,19 @@ function harvest(creep: Creep) {
     creep.memory.task = Task.Deposit;
   }
   else {
-    console.log(`Creep ${creep.name} is in an unknown state and will not do anything`);
+    console.log(`Creep ${creep.name} is in an unknown state and will not do anything. Task: ${creep.memory.task} Role: ${creep.memory.role} Energy: ${creep.store.energy} Capacity: ${creep.store.getCapacity()}`);
   }
 }
 
 function build(creep: Creep) {
   // Very bad code, states are not well defined and should be refactored to a state machine
+
+  // If the creep has no capacity, we should not do anything
+  // This happens when the creep spawns even though has CARRY body parts
+  if (!creep.store.getCapacity()) {
+    return;
+  }
+
   if (creep.store.energy < creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
     const sources = creep.room.find(FIND_SOURCES);
     const closest_source = creep.pos.findClosestByPath(sources);
