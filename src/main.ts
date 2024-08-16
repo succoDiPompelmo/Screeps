@@ -42,16 +42,17 @@ const SPAWN = 'Spawn';
 export const loop = () => {
   spawn_harvester(Game.spawns[SPAWN]);
   spawn_builder(Game.spawns[SPAWN]);
-  
 
   for (const creep_name in Game.creeps) {
     const creep = Game.creeps[creep_name];
+
+    // The first time we run the loop, we should set the task to harvest
+    setup_construction_sites(creep.room);
 
     if (creep.memory.role == Role.Harvester) {
       harvest(creep);
     } else if (creep.memory.role == Role.Builder) {
       // We should only setup construction sites once
-      setup_construction_sites(creep.room);
       build(creep);
     }
   }
@@ -113,6 +114,7 @@ function setup_construction_sites(room: Room) {
     room.createConstructionSite(spawn_position.x, spawn_position.y + 2, STRUCTURE_EXTENSION);
     room.createConstructionSite(spawn_position.x - 2, spawn_position.y, STRUCTURE_EXTENSION);
     room.createConstructionSite(spawn_position.x, spawn_position.y - 2, STRUCTURE_EXTENSION);
+    room.createConstructionSite(spawn_position.x + 2, spawn_position.y + 2, STRUCTURE_EXTENSION);
   }
 }
 
