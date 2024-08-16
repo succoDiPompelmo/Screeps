@@ -183,16 +183,24 @@ function deposit(creep: Creep, structure: Structure) {
 }
 
 function select_deposit_target(creep: Creep): Structure | undefined {
-  const spawns = creep.room.find(FIND_STRUCTURES, {
+  const spawns_with_free_capacity = creep.room.find(FIND_STRUCTURES, {
     filter: (structure) => {
       return (structure.structureType == STRUCTURE_SPAWN) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
     },
   });
 
+  const extensions_with_free_capacity = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) => {
+      return (structure.structureType == STRUCTURE_EXTENSION) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+    },
+  });
+
   const controller = creep.room.controller;
 
-  if (spawns.length > 0) {
-    return spawns[0];
+  if (spawns_with_free_capacity.length > 0) {
+    return spawns_with_free_capacity[0];
+  } else if (extensions_with_free_capacity.length > 0) {
+    return extensions_with_free_capacity[0];
   } else if (controller && controller.my) {
     return controller;
   }
