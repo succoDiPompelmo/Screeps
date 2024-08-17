@@ -216,19 +216,19 @@ function build(creep: Creep) {
   } else if (creep.store.energy > 0 && creep.memory.task == Task.Build) {
     const construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES);
 
-  if (construction_sites.length > 0) {
-    const closest_site = creep.pos.findClosestByPath(construction_sites);
+    if (construction_sites.length > 0) {
+      const closest_site = creep.pos.findClosestByPath(construction_sites);
 
-    if (closest_site) {
-      if (creep.build(closest_site) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(closest_site, { visualizePathStyle: { stroke: '#ffffff' } });
+      if (closest_site) {
+        if (creep.build(closest_site) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(closest_site, { visualizePathStyle: { stroke: '#ffffff' } });
+        }
       }
+    } else {
+      // We have no construction sites, so we should deposit the energy instead
+      creep.memory.task = Task.Deposit;
+      creep.memory.role = Role.Harvester;
     }
-  } else {
-    // We have no construction sites, so we should deposit the energy instead
-    creep.memory.task = Task.Deposit;
-    creep.memory.role = Role.Harvester;
-  }
   } else if (creep.store.energy == 0 && creep.memory.task == Task.Build) {
     creep.memory.task = Task.Harvest;
   } else if (creep.store.energy == creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
