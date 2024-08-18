@@ -82,7 +82,7 @@ function spawn_harvester(spawn: StructureSpawn) {
   let ran = Math.floor(Math.random() * 100000);
 
   if (harvesters_count < 3 && !spawn.spawning) {
-    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Pino_' + ran, { memory: { role: Role.Harvester, task: Task.Harvest } });
+    let output = spawn.spawnCreep([WORK, CARRY, MOVE, MOVE], 'Pino_' + ran, { memory: { role: Role.Harvester, task: Task.Harvest } });
 
     if (output != OK) {
       console.log(`Error spawning harvester creep: ${output}`);
