@@ -1,3 +1,5 @@
+import path from "path";
+
 enum Role {
   Harvester = 1,
   Builder,
@@ -41,16 +43,18 @@ declare global {
 const SPAWN = 'Spawn';
 
 export const loop = () => {
-  spawn_harvester(Game.spawns[SPAWN]);
-  spawn_miners(Game.spawns[SPAWN]);
-  spawn_builder(Game.spawns[SPAWN]);
+  const spawn = Game.spawns[SPAWN];
+
+  spawn_harvester(spawn);
+  spawn_miners(spawn);
+  spawn_builder(spawn);
 
   for (const creep_name in Game.creeps) {
     const creep = Game.creeps[creep_name];
 
     // The first time we run the loop, we should set the task to harvest
     setup_construction_sites(creep.room);
-    setup_resources_containers(creep.room);
+    setup_resources_containers(creep.room, spawn);
 
     if (creep.memory.role == Role.Harvester) {
       harvest(creep);
@@ -139,49 +143,21 @@ function setup_construction_sites(room: Room) {
   }
 }
 
-function setup_resources_containers(room: Room) {
+function setup_resources_containers(room: Room, spawn: StructureSpawn) {
   let sources = room.find(FIND_SOURCES);
 
   for (let source of sources) {
-    try_setup_resources_container(source);
+    try_setup_resources_container(source, spawn);
   }
 }
 
-function try_setup_resources_container(source: Source) {
+function try_setup_resources_container(source: Source, spawn: StructureSpawn) {
 
-  const SEARCH_RADIUS = 3;
-
-  // Check if a container or construction site is present near the source
-  for (let x = -SEARCH_RADIUS; x < SEARCH_RADIUS; x++) {
-    for (let y = -SEARCH_RADIUS; y < SEARCH_RADIUS; y++) {
-      let pos_objects = source.room.lookAt(source.pos.x + x, source.pos.y + y);
-
-      for (let pos_object of pos_objects) {
-        if (pos_object.type == 'structure' && pos_object.structure?.structureType == STRUCTURE_CONTAINER) {
-          return;
-        }
-
-        if (pos_object.type == 'constructionSite' && pos_object.constructionSite?.structureType == STRUCTURE_CONTAINER) {
-          return;
-        }
-      }
-    }
+  // Place a container next to the source and in the path to the spawn
+  const path_finder = PathFinder.search(source.pos, { pos: spawn.pos, range: 1 });
+  if (OK == source.room.createConstructionSite(path_finder.path[1], STRUCTURE_CONTAINER)) {
+    return;
   }
-
-  for (let x = -SEARCH_RADIUS; x < SEARCH_RADIUS; x++) {
-    for (let y = -SEARCH_RADIUS; y < SEARCH_RADIUS; y++) {
-      let pos_objects = source.room.lookAt(source.pos.x + x, source.pos.y + y);
-
-      // Check if only a terrain object is present
-      if (pos_objects.length == 1 && pos_objects[0].type == 'terrain') {
-        if (OK == source.room.createConstructionSite(source.pos.x + x, source.pos.y + y, STRUCTURE_CONTAINER)) {
-          return;
-        }
-      }
-    }
-  }
-
-  // The checks are split into two loops to avoid creating multiple construction sites when the first one is already created in a non-optimal position
 
   console.log(`Could not setup container for source at X ${source.pos.x} Y ${source.pos.y}`);
 }
