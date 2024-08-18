@@ -291,6 +291,14 @@ function build(creep: Creep) {
     if (closest_container && creep.withdraw(closest_container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
       creep.moveTo(closest_container, { visualizePathStyle: { stroke: '#ffaa00' } });
     }
+
+    // If we can't find a container, we should try to harvest the source directly
+    const sources = creep.room.find(FIND_SOURCES);
+    const closest_source = creep.pos.findClosestByPath(sources);
+
+    if (closest_source && creep.harvest(closest_source) == ERR_NOT_IN_RANGE) {
+      creep.moveTo(closest_source, { visualizePathStyle: { stroke: '#ffaa00' } });
+    }
   } else if (creep.store.energy > 0 && creep.memory.task == Task.Build) {
     const construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES);
 
