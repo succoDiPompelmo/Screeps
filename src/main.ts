@@ -114,11 +114,11 @@ function spawn_miners(spawn: StructureSpawn) {
     let name = 'Pietro_' + ran;
     let memory = { role: Role.Miner, task: Task.Harvest };
 
-    if (spawn.room.energyAvailable < 400) {
+    if (spawn.room.energyAvailable >= 300 && spawn.room.energyAvailable < 350) {
       let body_parts = [WORK, WORK, CARRY, MOVE];
       spawn.spawnCreep(body_parts, name, { memory: memory });
       return;
-    } else if (spawn.room.energyAvailable < 500) {
+    } else if (spawn.room.energyAvailable > 350) {
       let body_parts = [WORK, WORK, CARRY, CARRY, MOVE];
       spawn.spawnCreep(body_parts, name, { memory: memory });
       return;
