@@ -167,11 +167,21 @@ function try_setup_resources_container(source: Source, spawn: StructureSpawn) {
 
   // Place a container next to the source and in the path to the spawn
   const path_finder = PathFinder.search(source.pos, { pos: spawn.pos, range: 1 });
-  if (OK == source.room.createConstructionSite(path_finder.path[1], STRUCTURE_CONTAINER)) {
+  const container_site = path_finder.path[1];
+
+  // If another container or construction site is already there, we should not place another one
+  const structures = source.room.lookAt(container_site.x, container_site.y);
+  const is_container = structures.some((structure) => (structure.type == 'structure' || structure.type == 'constructionSite'));
+
+  if (is_container) {
     return;
   }
 
-  console.log(`Could not setup container for source at X ${source.pos.x} Y ${source.pos.y}`);
+  if (OK == source.room.createConstructionSite(container_site, STRUCTURE_CONTAINER)) {
+    return;
+  }
+
+  console.log(`Could not setup container for source at X ${container_site.x} Y ${container_site.y}`);
 }
 
 function mine(creep: Creep) {
