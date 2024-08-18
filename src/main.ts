@@ -1,6 +1,7 @@
 enum Role {
   Harvester = 1,
   Builder,
+  Miner,
 }
 
 enum Task {
@@ -41,6 +42,7 @@ const SPAWN = 'Spawn';
 
 export const loop = () => {
   spawn_harvester(Game.spawns[SPAWN]);
+  spawn_miners(Game.spawns[SPAWN]);
   spawn_builder(Game.spawns[SPAWN]);
 
   for (const creep_name in Game.creeps) {
@@ -55,6 +57,8 @@ export const loop = () => {
     } else if (creep.memory.role == Role.Builder) {
       // We should only setup construction sites once
       build(creep);
+    } else if (creep.memory.role == Role.Miner) {
+      mine(creep);
     }
   }
 
@@ -78,6 +82,22 @@ function spawn_harvester(spawn: StructureSpawn) {
 
     if (output != OK) {
       console.log(`Error spawning harvester creep: ${output}`);
+    }
+  }
+}
+
+function spawn_miners(spawn: StructureSpawn) {
+  let creeps = Game.creeps;
+  let miners = Object.keys(creeps).filter((creep_name) => creeps[creep_name].memory.role == Role.Miner && creeps[creep_name]);
+  let miners_count = miners.length;
+
+  let ran = Math.floor(Math.random() * 100000);
+
+  if (miners_count < 1 && !spawn.spawning) {
+    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Pietro_' + ran, { memory: { role: Role.Miner, task: Task.Harvest } });
+
+    if (output != OK) {
+      console.log(`Error spawning miner creep: ${output}`);
     }
   }
 }
@@ -166,7 +186,7 @@ function try_setup_resources_container(source: Source) {
   console.log(`Could not setup container for source at X ${source.pos.x} Y ${source.pos.y}`);
 }
 
-function harvest(creep: Creep) {
+function mine(creep: Creep) {
   // Very bad code, states are not well defined and should be refactored to a state machine
 
   // If the creep has no capacity, we should not do anything
@@ -179,7 +199,48 @@ function harvest(creep: Creep) {
     const sources = creep.room.find(FIND_SOURCES);
     const closest_source = creep.pos.findClosestByPath(sources);
 
-    gather(creep, closest_source);
+    if (closest_source && creep.harvest(closest_source) == ERR_NOT_IN_RANGE) {
+      creep.moveTo(closest_source, { visualizePathStyle: { stroke: '#ffaa00' } });
+    }
+  } else if (creep.store.energy > 0 && creep.memory.task == Task.Deposit) {
+    const container = find_closest_container(creep);
+
+    if (!container) {
+      console.log('No target found to deposit energy');
+      return;
+    }
+
+    deposit(creep, container);
+  } else if (creep.store.energy == 0 && creep.memory.task == Task.Deposit) {
+    creep.memory.task = Task.Harvest;
+  } else if (creep.store.energy == creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
+    creep.memory.task = Task.Deposit;
+  }
+  else {
+    console.log(`Creep ${creep.name} is in an unknown state and will not do anything. Task: ${creep.memory.task} Role: ${creep.memory.role} Energy: ${creep.store.energy} Capacity: ${creep.store.getCapacity()}`);
+  }
+}
+
+function harvest(creep: Creep) {
+  // Very bad code, states are not well defined and should be refactored to a state machine
+
+  // If the creep has no capacity, we should not do anything
+  // This happens when the creep spawns even though has CARRY body parts
+  if (!creep.store.getCapacity()) {
+    return;
+  }
+
+  if (creep.store.energy < creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
+    const containers = creep.room.find(FIND_STRUCTURES, {
+      filter: (structure) => {
+        return (structure.structureType == STRUCTURE_CONTAINER) && structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
+      },
+    });
+    const closest_container = creep.pos.findClosestByPath(containers);
+
+    if (closest_container && creep.withdraw(closest_container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+      creep.moveTo(closest_container, { visualizePathStyle: { stroke: '#ffaa00' } });
+    }
   } else if (creep.store.energy > 0 && creep.memory.task == Task.Deposit) {
     const target = select_deposit_target(creep);
 
@@ -209,10 +270,16 @@ function build(creep: Creep) {
   }
 
   if (creep.store.energy < creep.store.getCapacity() && creep.memory.task == Task.Harvest) {
-    const sources = creep.room.find(FIND_SOURCES);
-    const closest_source = creep.pos.findClosestByPath(sources);
+    const containers = creep.room.find(FIND_STRUCTURES, {
+      filter: (structure) => {
+        return (structure.structureType == STRUCTURE_CONTAINER) && structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
+      },
+    });
+    const closest_container = creep.pos.findClosestByPath(containers);
 
-    gather(creep, closest_source);
+    if (closest_container && creep.withdraw(closest_container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+      creep.moveTo(closest_container, { visualizePathStyle: { stroke: '#ffaa00' } });
+    }
   } else if (creep.store.energy > 0 && creep.memory.task == Task.Build) {
     const construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES);
 
@@ -239,9 +306,9 @@ function build(creep: Creep) {
   }
 }
 
-function gather(creep: Creep, source: Source | null) {
-  if (source && creep.harvest(source) == ERR_NOT_IN_RANGE) {
-    creep.moveTo(source, { visualizePathStyle: { stroke: '#ffaa00' } });
+function gather(creep: Creep, structure: Structure | null) {
+  if (structure && creep.withdraw(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+    creep.moveTo(structure, { visualizePathStyle: { stroke: '#ffaa00' } });
   }
 }
 
@@ -252,6 +319,16 @@ function deposit(creep: Creep, structure: Structure) {
   if (creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
     creep.moveTo(structure, { visualizePathStyle: { stroke: '#ffffff' } });
   }
+}
+
+function find_closest_container(creep: Creep): Structure | null {
+  const containers = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) => {
+      return (structure.structureType == STRUCTURE_CONTAINER);
+    },
+  });
+
+  return creep.pos.findClosestByPath(containers);
 }
 
 function select_deposit_target(creep: Creep): Structure | undefined {
