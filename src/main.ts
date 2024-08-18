@@ -110,7 +110,7 @@ function spawn_miners(spawn: StructureSpawn) {
   let ran = Math.floor(Math.random() * 100000);
 
   if (miners_count < 1 && !spawn.spawning) {
-    let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Pietro_' + ran, { memory: { role: Role.Miner, task: Task.Harvest } });
+    let output = spawn.spawnCreep([WORK, WORK, CARRY, MOVE], 'Pietro_' + ran, { memory: { role: Role.Miner, task: Task.Harvest } });
 
     if (output != OK) {
       console.log(`Error spawning miner creep: ${output}`);
