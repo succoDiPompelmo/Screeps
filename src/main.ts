@@ -91,6 +91,18 @@ function spawn_harvester(spawn: StructureSpawn) {
 }
 
 function spawn_miners(spawn: StructureSpawn) {
+
+  // Check if any container is available
+  const containers = spawn.room.find(FIND_STRUCTURES, {
+    filter: (structure) => {
+      return (structure.structureType == STRUCTURE_CONTAINER && structure.isActive());
+    },
+  });
+
+  if (containers.length == 0) {
+    return;
+  }
+
   let creeps = Game.creeps;
   let miners = Object.keys(creeps).filter((creep_name) => creeps[creep_name].memory.role == Role.Miner && creeps[creep_name]);
   let miners_count = miners.length;
