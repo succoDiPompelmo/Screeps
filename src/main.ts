@@ -111,7 +111,7 @@ function spawn_builder(spawn: StructureSpawn) {
 
   let ran = Math.floor(Math.random() * 100000);
 
-  if (builders_count < 3 && !spawn.spawning && construction_sites.length > 0) {
+  if (builders_count < 1 && !spawn.spawning && construction_sites.length > 0) {
     let output = spawn.spawnCreep([WORK, CARRY, MOVE], 'Mario_' + ran, { memory: { role: Role.Builder, task: Task.Harvest } });
 
     if (output != OK) {
